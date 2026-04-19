@@ -1,1 +1,1 @@
-# kNN-class-imbalance
+# kNN-outliers
