@@ -65,6 +65,43 @@ class KNNClassifier(KNNBase):
         return most_common_label
 
 
+class WeightedKNNClassifier(KNNBase):
+    """Distance-weighted nearest neighbors classifier."""
+
+    def _predict_x(self, x):
+        """Predict the label of a single instance x using distance weights."""
+        
+        # compute distances between x and all examples in the training set.
+        # Handle zero distance by adding a small epsilon
+        epsilon = 1e-9
+        distances = [self.distance_func(x, example) for example in self.X]
+        
+        # Zip distances with targets
+        neighbors = sorted(
+            zip(distances, self.y),
+            key=lambda x: x[0],
+        )
+
+        # Get top k neighbors
+        top_k = neighbors[:self.k]
+        
+        # Calculate weights: 1 / (distance + epsilon)
+        weights = [1.0 / (dist + epsilon) for dist, target in top_k]
+        targets = [target for dist, target in top_k]
+        
+        # Aggregate weighted votes
+        class_votes = {}
+        for weight, target in zip(weights, targets):
+            class_votes[target] = class_votes.get(target, 0) + weight
+            
+        # Return the class with the maximum weighted vote
+        return max(class_votes, key=class_votes.get)
+
+    def aggregate(self, neighbors_targets):
+        # This is not used as we override _predict_x to handle weights
+        pass
+
+
 class KNNRegressor(KNNBase):
     """Nearest neighbors regressor."""
 
